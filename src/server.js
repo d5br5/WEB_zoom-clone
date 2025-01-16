@@ -18,11 +18,21 @@ const handleListen = () => {
 const httpServer = http.createServer(app);
 const wsServer = new ws.Server({ server: httpServer });
 
+const browserSocketList = [];
+
 wsServer.on("connection", (socket, req) => {
+  const clientId = req.headers["sec-websocket-key"]; // 고유한 WebSocket 키
+  console.log(`New connection: ${clientId}`);
+  browserSocketList.push(socket);
+
   socket.on("message", (message) => {
     console.log(message.toString());
+    browserSocketList.forEach((browserSocket) => {
+      if (browserSocket !== socket) {
+        browserSocket.send(message.toString());
+      }
+    });
   });
-  socket.send("hello");
   socket.on("close", () => {
     console.log("Disconnected from the Browser");
   });
