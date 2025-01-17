@@ -81,9 +81,9 @@ socket.on("room_change", (rooms) => {
   if (rooms.length === 0) {
     return;
   }
-  rooms.forEach((room) => {
+  rooms.forEach(({ roomName: room, count }) => {
     const li = document.createElement("li");
-    li.innerText = room;
+    li.innerText = `${room} (${count})`;
     roomList.appendChild(li);
     li.addEventListener("click", () => {
       socket.emit("enter_room", { payload: room }, showRoom);

@@ -22,9 +22,11 @@ const handleListen = () => {
 const getPublicRooms = () => {
   const { sids, rooms } = io.sockets.adapter;
   const publicRooms = [];
+
   rooms.forEach((_, key) => {
     if (sids.get(key) === undefined) {
-      publicRooms.push(key);
+      const userCountInRoom = io.sockets.adapter.rooms.get(key)?.size || 0;
+      publicRooms.push({ roomName: key, count: userCountInRoom });
     }
   });
   return publicRooms;
