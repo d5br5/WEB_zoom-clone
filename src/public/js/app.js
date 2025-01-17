@@ -1,20 +1,48 @@
-const messageList = document.querySelector("ul");
-const messageForm = document.querySelector("form");
+// 고유 ID 생성 함수
+function generateClientId() {
+  return Math.random().toString(36).substring(2, 11);
+}
 
-const socket = new WebSocket(`ws://${window.location.host}`);
+// sessionStorage에서 clientId 확인 또는 생성
+function getClientId() {
+  let clientId = sessionStorage.getItem("clientId");
+  if (!clientId) {
+    clientId = generateClientId();
+    sessionStorage.setItem("clientId", clientId);
+  }
+  return clientId;
+}
+
+// WebSocket 연결
+let nickname = "noname";
+const clientId = getClientId();
+
+const messageList = document.querySelector("ul");
+const messageForm = document.getElementById("message-form");
+
+const socket = new WebSocket(
+  `ws://${window.location.host}?clientId=${clientId}`
+);
 
 socket.addEventListener("open", () => {
   console.log("Connected to Server");
 });
 
-const addMessage = (message) => {
+const addMessage = ({ clientId, message }) => {
   const li = document.createElement("li");
-  li.innerText = message;
+  li.innerText = `${clientId}: ${message}`;
   messageList.append(li);
 };
 
 socket.addEventListener("message", (message) => {
-  addMessage(message.data);
+  const data = JSON.parse(message.data);
+  const { type } = data;
+  if (type === "history") {
+    data.chatList.forEach(addMessage);
+  }
+  if (type === "message") {
+    addMessage(data);
+  }
 });
 
 socket.addEventListener("close", () => {
@@ -24,7 +52,8 @@ socket.addEventListener("close", () => {
 messageForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const input = messageForm.querySelector("input");
-  socket.send(input.value);
-  addMessage(input.value);
+  const message = input.value;
+  socket.send(JSON.stringify({ type: "message", message }));
+  addMessage({ clientId, message });
   input.value = "";
 });

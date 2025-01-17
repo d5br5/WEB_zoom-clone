@@ -18,20 +18,32 @@ const handleListen = () => {
 const httpServer = http.createServer(app);
 const wsServer = new ws.Server({ server: httpServer });
 
-const browserSocketList = [];
+const browserSocketList = {};
+const chatList = [];
 
 wsServer.on("connection", (socket, req) => {
-  const clientId = req.headers["sec-websocket-key"]; // 고유한 WebSocket 키
+  const urlParams = new URLSearchParams(req.url.split("?")[1]);
+  const clientId = urlParams.get("clientId") || "unknown";
   console.log(`New connection: ${clientId}`);
-  browserSocketList.push(socket);
+  browserSocketList[clientId] = socket;
+
+  // 브라우저 소켓 연결시 기존 채팅 목록 전송
+  socket.send(JSON.stringify({ type: "history", chatList }));
 
   socket.on("message", (message) => {
-    console.log(message.toString());
-    browserSocketList.forEach((browserSocket) => {
-      if (browserSocket !== socket) {
-        browserSocket.send(message.toString());
-      }
-    });
+    const data = JSON.parse(message.toString());
+
+    console.log(data);
+
+    if (data.type === "message") {
+      const payload = { clientId, message: data.message };
+      chatList.push(payload);
+      Object.entries(browserSocketList).forEach(([id, browserSocket]) => {
+        if (id !== clientId) {
+          browserSocket.send(JSON.stringify({ type: "message", ...payload }));
+        }
+      });
+    }
   });
   socket.on("close", () => {
     console.log("Disconnected from the Browser");

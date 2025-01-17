@@ -10,7 +10,10 @@ html(lang="en")
       h1 Doom
     main
       ul
-      form
+      form#message-form
         input(type="text", placeholder="Write your message")
         button Send
+      form#nickname-form
+        input(type="text", placeholder="Set your nickname")
+        button Change
     script(src="/public/js/app.js") 
