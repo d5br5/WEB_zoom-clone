@@ -20,10 +20,23 @@ const handleListen = () => {
 };
 
 io.on("connection", (socket) => {
-  console.log("Connected");
+  socket.onAny((event, data) => {
+    console.log(`Socket Event: ${event}`);
+  });
   socket.on("enter_room", (data, done) => {
-    console.log(data);
+    const roomName = data.payload;
+    socket.join(roomName);
     done();
+    socket.to(roomName).emit("welcome");
+  });
+  socket.on("new_message", (data, done) => {
+    const { payload, room } = data;
+    socket.to(room).emit("new_message", payload);
+    done();
+  });
+
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
   });
 });
 
