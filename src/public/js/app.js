@@ -19,6 +19,7 @@ const clientId = getClientId();
 
 const messageList = document.querySelector("ul");
 const messageForm = document.getElementById("message-form");
+const nicknameForm = document.getElementById("nickname-form");
 
 const socket = new WebSocket(
   `ws://${window.location.host}?clientId=${clientId}`
@@ -27,6 +28,8 @@ const socket = new WebSocket(
 socket.addEventListener("open", () => {
   console.log("Connected to Server");
 });
+
+const makeMessage = (type, payload) => JSON.stringify({ type, payload });
 
 const addMessage = ({ clientId, message }) => {
   const li = document.createElement("li");
@@ -38,7 +41,7 @@ socket.addEventListener("message", (message) => {
   const data = JSON.parse(message.data);
   const { type } = data;
   if (type === "history") {
-    data.chatList.forEach(addMessage);
+    data.payload.chatList.forEach(addMessage);
   }
   if (type === "message") {
     addMessage(data);
@@ -53,7 +56,16 @@ messageForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const input = messageForm.querySelector("input");
   const message = input.value;
-  socket.send(JSON.stringify({ type: "message", message }));
+  socket.send(makeMessage("message", message));
   addMessage({ clientId, message });
   input.value = "";
 });
+
+const handleNicknameSubmit = (event) => {
+  event.preventDefault();
+  const input = nicknameForm.querySelector("input");
+  nickname = input.value;
+  socket.send(makeMessage("nickname", nickname));
+};
+
+nicknameForm.addEventListener("submit", handleNicknameSubmit);

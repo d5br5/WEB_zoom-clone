@@ -28,21 +28,23 @@ wsServer.on("connection", (socket, req) => {
   browserSocketList[clientId] = socket;
 
   // 브라우저 소켓 연결시 기존 채팅 목록 전송
-  socket.send(JSON.stringify({ type: "history", chatList }));
+  socket.send(JSON.stringify({ type: "history", payload: { chatList } }));
 
   socket.on("message", (message) => {
     const data = JSON.parse(message.toString());
 
-    console.log(data);
-
     if (data.type === "message") {
-      const payload = { clientId, message: data.message };
+      const payload = { clientId, message: data.payload };
       chatList.push(payload);
       Object.entries(browserSocketList).forEach(([id, browserSocket]) => {
         if (id !== clientId) {
           browserSocket.send(JSON.stringify({ type: "message", ...payload }));
         }
       });
+    }
+
+    if (data.type === "nickname") {
+      console.log(data.payload);
     }
   });
   socket.on("close", () => {
