@@ -83,38 +83,3 @@ instrument(io, {
 });
 
 httpServer.listen(3000, handleListen);
-
-// const browserSocketList = {};
-// const chatList = [];
-
-// const wsServer = new ws.Server({ server: httpServer });
-// wsServer.on("connection", (socket, req) => {
-//   const urlParams = new URLSearchParams(req.url.split("?")[1]);
-//   const clientId = urlParams.get("clientId") || "unknown";
-//   console.log(`New connection: ${clientId}`);
-//   browserSocketList[clientId] = socket;
-
-//   // 브라우저 소켓 연결시 기존 채팅 목록 전송
-//   socket.send(JSON.stringify({ type: "history", payload: { chatList } }));
-
-//   socket.on("message", (message) => {
-//     const data = JSON.parse(message.toString());
-
-//     if (data.type === "message") {
-//       const payload = { clientId, message: data.payload };
-//       chatList.push(payload);
-//       Object.entries(browserSocketList).forEach(([id, browserSocket]) => {
-//         if (id !== clientId) {
-//           browserSocket.send(JSON.stringify({ type: "message", ...payload }));
-//         }
-//       });
-//     }
-
-//     if (data.type === "nickname") {
-//       console.log(data.payload);
-//     }
-//   });
-//   socket.on("close", () => {
-//     console.log("Disconnected from the Browser");
-//   });
-// });
