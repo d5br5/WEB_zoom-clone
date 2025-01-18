@@ -13,7 +13,6 @@ let cameraOff = false;
 async function getCameras() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    console.log(devices);
     const cameras = devices.filter((device) => device.kind === "videoinput");
     const currentCamera = myStream.getVideoTracks()[0];
 
@@ -34,30 +33,6 @@ async function getCameras() {
   }
 }
 
-async function getAudio() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const audios = devices.filter((device) => device.kind === "audioinput");
-
-    const currentAudio = myStream.getAudioTracks()[0];
-
-    audios.forEach((audio) => {
-      const option = document.createElement("option");
-      option.value = audio.deviceId;
-      option.innerText = audio.label;
-
-      if (currentAudio.label === audio.label) {
-        option.selected = true;
-        option.innerText = audio.label + " (current)";
-      }
-
-      audioSelect.appendChild(option);
-    });
-  } catch (e) {
-    console.log(e);
-  }
-}
-
 async function getMedia(deviceId) {
   const cameraConstrains = {
     audio: true,
@@ -71,7 +46,6 @@ async function getMedia(deviceId) {
     myFace.srcObject = myStream;
     if (!deviceId) {
       await getCameras();
-      await getAudio();
     }
   } catch (e) {
     console.log(e);
