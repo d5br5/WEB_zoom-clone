@@ -6,9 +6,14 @@ const cameraBtn = document.getElementById("camera");
 const cameraSelect = document.getElementById("cameraSelect");
 const audioSelect = document.getElementById("audioSelect");
 
+const call = document.getElementById("call");
+
+call.hidden = true;
+
 let myStream;
 let muted = false;
 let cameraOff = false;
+let myPeerConnection;
 
 async function getCameras() {
   try {
@@ -52,8 +57,6 @@ async function getMedia(deviceId) {
   }
 }
 
-getMedia();
-
 const handleMuteClick = () => {
   myStream
     .getAudioTracks()
@@ -83,3 +86,67 @@ const handleCameraChange = async () => {
 };
 
 cameraSelect.addEventListener("input", handleCameraChange);
+
+// Welcome Form (join a room)
+
+let roomName;
+
+const welcome = document.getElementById("welcome");
+const welcomeForm = welcome.querySelector("form");
+
+const startMedia = async () => {
+  welcome.hidden = true;
+  call.hidden = false;
+  await getMedia();
+  makeConnection();
+};
+
+const handleWelcomeSubmit = async (event) => {
+  event.preventDefault();
+  const input = welcomeForm.querySelector("input");
+  roomName = input.value;
+  await startMedia();
+  socket.emit("join_room", roomName);
+  input.value = "";
+};
+
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
+
+// Socket Code
+
+socket.on("welcome", async () => {
+  console.log("someone joined");
+  const offer = await myPeerConnection.createOffer();
+  console.log(myPeerConnection);
+  myPeerConnection.setLocalDescription(offer);
+  console.log(myPeerConnection);
+  socket.emit("offer", offer, roomName);
+});
+
+socket.on("offer", async (offer) => {
+  console.log("received the offer");
+  console.log(myPeerConnection);
+  myPeerConnection.setRemoteDescription(offer);
+  console.log(myPeerConnection);
+  const answer = await myPeerConnection.createAnswer();
+  myPeerConnection.setLocalDescription(answer);
+  console.log(myPeerConnection);
+  socket.emit("answer", answer, roomName);
+});
+
+socket.on("answer", (answer) => {
+  console.log("received the answer");
+  console.log(myPeerConnection);
+  myPeerConnection.setRemoteDescription(answer);
+  console.log(myPeerConnection);
+});
+
+// RTC Code
+
+function makeConnection() {
+  myPeerConnection = new RTCPeerConnection();
+  console.log(myPeerConnection);
+  myStream
+    .getTracks()
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
