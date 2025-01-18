@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 // import ws from "ws";
 import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 
 const app = express();
 
@@ -10,7 +11,12 @@ app.set("views", process.cwd() + "/src/views");
 app.use("/public", express.static(process.cwd() + "/src/public"));
 
 const httpServer = http.createServer(app);
-const io = new Server(httpServer, {});
+const io = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
 
 app.get("/", (_, res) => res.render("home"));
 // app.get("/*", (_, res) => res.redirect("/"));
@@ -69,6 +75,11 @@ io.on("connection", (socket) => {
     done();
     io.sockets.emit("room_change", getPublicRooms());
   });
+});
+
+instrument(io, {
+  auth: false,
+  mode: "development",
 });
 
 httpServer.listen(3000, handleListen);
